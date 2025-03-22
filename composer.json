@@ -26,7 +26,7 @@
         }
     ],
     "support": {
-        "docs": "ttps://devodocs.com/laravel/filament-url-image-uploader",
+        "docs": "https://devodocs.com/laravel/filament-url-image-uploader",
         "issues": "https://github.com/amjadiqbal/filament-url-image-uploader/issues",
         "source": "https://github.com/amjadiqbal/filament-url-image-uploader",
         "discord": "https://discord.com/channels/1352854772859932702/1352854916690874388"
