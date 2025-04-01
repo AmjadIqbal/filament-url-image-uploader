@@ -38,11 +38,11 @@ protected function image(): Attribute
 }
 ```
 
-## onfiguration
+## Configuration
 ### Directory Configuration
 You can customize the storage directory:
 ```php
-    UrlImageUploader::make('image')->directory('custom/path/here');
+UrlImageUploader::make('image')->directory('custom/path/here');
 ```
 
 ## Support
