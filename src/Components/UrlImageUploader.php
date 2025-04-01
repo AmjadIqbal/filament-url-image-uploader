@@ -49,7 +49,30 @@ class UrlImageUploader extends Field
                                 ->image()
                                 ->preserveFilenames($this->shouldPreserveFilenames)
                                 ->directory($this->directory)
-                                ->maxSize(5120),
+                                ->disk('public')
+                                ->live()
+                                ->afterStateUpdated(function ($state, Set $set) {
+                                    if (!empty($state)) {
+                                      
+
+                                        if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                            $filename = $state->getFilename();
+                                            
+                                            // Store file directly in the public directory
+                                            Storage::disk('public')->putFileAs(
+                                                $this->directory,
+                                                $state,
+                                                $filename
+                                            );
+
+                                        } else {
+                                            $filename = is_array($state) ? $state[0] : $state;
+                                        }
+
+                                        $set('image', [$filename]);
+                                        $set('preview_url', asset("storage/{$this->directory}/{$filename}"));
+                                    }
+                                }),
                         ]),
                     Tabs\Tab::make('url')
                         ->label('URL Upload')
