@@ -16,15 +16,26 @@
             // Handle different data types
             $imageData = $record ? (
                 is_string($record->{$field->getName()}) 
-                    ? json_decode($record->{$field->getName()}, true) 
-                    : $record->{$field->getName()}
+                    ? $record->{$field->getName()}
+                    : ($record->{$field->getName()} ?? null)
             ) : null;
             
             // Handle both new uploads and existing images
-            if (is_array($state) && !empty($state['image'])) {
-                $uploadedImage = Storage::disk('public')->url($field->getDirectory() . '/' . $state['image'][0]);
-            } else {
-                $uploadedImage = $imageData['preview_url'] ?? null;
+            $uploadedImage = null;
+            if (!empty($state)) {
+                if (is_array($state)) {
+                    if (isset($state['image'])) {
+                        $filename = is_array($state['image']) ? ($state['image'][0] ?? '') : $state['image'];
+                    } else {
+                        $filename = is_array($state) ? ($state[0] ?? '') : $state;
+                    }
+                } else {
+                    $filename = $state;
+                }
+                
+                if (!empty($filename)) {
+                    $uploadedImage = Storage::disk('public')->url( $filename);
+                }
             }
         @endphp
         

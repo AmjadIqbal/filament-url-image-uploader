@@ -9,7 +9,6 @@ use Filament\Forms\Components\Actions;
 use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Tabs;
-use Filament\Forms\Components\ViewField;
 use Illuminate\Support\Facades\Storage;
 
 class UrlImageUploader extends Field
@@ -36,8 +35,11 @@ class UrlImageUploader extends Field
         return $this->directory;
     }
 
+
     public function getChildComponents(): array
     {
+        $fieldName = $this->getName();
+
         return [
             Tabs::make('upload_methods')
                 ->tabs([
@@ -45,91 +47,56 @@ class UrlImageUploader extends Field
                         ->label('File Upload')
                         ->icon('heroicon-o-arrow-up-tray')
                         ->schema([
-                            FileUpload::make('image')
+                            FileUpload::make($fieldName)
                                 ->image()
                                 ->preserveFilenames($this->shouldPreserveFilenames)
                                 ->directory($this->directory)
                                 ->disk('public')
-                                ->live()
-                                ->afterStateUpdated(function ($state, Set $set) {
-                                    if (!empty($state)) {
-                                      
-
-                                        if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-                                            $filename = $state->getFilename();
-                                            
-                                            // Store file directly in the public directory
-                                            Storage::disk('public')->putFileAs(
-                                                $this->directory,
-                                                $state,
-                                                $filename
-                                            );
-
-                                        } else {
-                                            $filename = is_array($state) ? $state[0] : $state;
+                                ->afterStateUpdated(function ($state, Set $set) use ($fieldName) {
+                                    if ($state) {
+                                        $uploadedFile = $state ?? null;
+                                        if ($uploadedFile instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                            $filename = $uploadedFile->getClientOriginalName();
+                                            $url = Storage::disk('public')->url("{$this->directory}/{$filename}");
+                                            $set("{$fieldName}", ["{$this->directory}/{$filename}"]);
+                                            $set("{$fieldName}_url", $url);
                                         }
-
-                                        $set('image', [$filename]);
-                                        $set('preview_url', asset("storage/{$this->directory}/{$filename}"));
                                     }
-                                }),
+                                })
                         ]),
                     Tabs\Tab::make('url')
                         ->label('URL Upload')
                         ->icon('heroicon-o-globe-alt')
                         ->schema([
-                            TextInput::make('image_url')
+                            TextInput::make("{$fieldName}_url")
                                 ->url()
-                                ->helperText('Enter a valid image URL')
-                                ->dehydrated(false)
-                                ->live(),  // Make it live to update preview
+                                ->helperText('Enter a valid image URL'),
                             Actions::make([
-                                Actions\Action::make('fetch_image')
+                                Actions\Action::make('fetch')
                                     ->label('Fetch Image')
-                                    ->action(function (Set $set, $state, $action) {
-                                        $imageUrl = $state['image_url'] ?? null;
-                                   
-                                        if (!$imageUrl || !filter_var($imageUrl, FILTER_VALIDATE_URL)) {
-                                            Notification::make()
-                                                ->danger()
-                                                ->title('Invalid URL')
-                                                ->body('Please enter a valid image URL')
-                                                ->send();
+                                    ->icon('heroicon-o-arrow-down-tray')
+                                    ->action(function (Set $set, $state) use ($fieldName) {
+                                        $imageUrl = $state["{$fieldName}_url"];
+                                        if (!filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                                             return;
                                         }
-                                        
+
                                         try {
-                                            $ch = curl_init($imageUrl);
-                                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                                            curl_setopt($ch, CURLOPT_HEADER, true);
-                                            curl_setopt($ch, CURLOPT_NOBODY, true);
-                                            curl_exec($ch);
-                                            
-                                            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-                                            curl_close($ch);
-                                            
-                                            if (!str_starts_with($contentType, 'image/')) {
-                                                throw new \Exception('URL does not point to a valid image');
-                                            }
-                                    
                                             $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
                                             $tempImage = file_get_contents($imageUrl);
                                             
                                             if (!$tempImage) {
-                                                throw new \Exception('Could not fetch image from URL');
+                                                throw new \Exception('Could not fetch image');
                                             }
-                                        
-                                            $directory = storage_path("app/public/{$this->directory}");
                                             
-                                            if (!file_exists($directory)) {
-                                                mkdir($directory, 0755, true);
-                                            }
-                                        
-                                            $tempPath = $directory . '/' . $filename;
-                                            file_put_contents($tempPath, $tempImage);
+                                            Storage::disk('public')->put(
+                                                "{$this->directory}/{$filename}",
+                                                $tempImage
+                                            );
                                             
-                                            $set('image', [$filename]);
-                                            $set('preview_url', asset("storage/{$this->directory}/{$filename}"));
+                                            $url = Storage::disk('public')->url("{$this->directory}/{$filename}");
+                                            $set("{$fieldName}", ["{$this->directory}/{$filename}"]);
+                                            $set("{$fieldName}_url", $url);
                                             
                                             Notification::make()
                                                 ->success()
@@ -143,9 +110,10 @@ class UrlImageUploader extends Field
                                                 ->send();
                                         }
                                     })
-                            ]),
+                            ])
                         ]),
-                ])->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
         ];
     }
 }
