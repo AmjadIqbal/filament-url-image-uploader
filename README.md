@@ -68,7 +68,7 @@ Need expert help?
 Please see [CHANGELOG.md](https://github.com/AmjadIqbal/filament-url-image-uploader/blob/main/CHANGELOG.md) for more information on what has changed recently.
 
 ## Security Vulnerabilities
-If you discover a security vulnerability, please send an email to Amjad Iqbal via amjad.khatri@hotmail.com. All security vulnerabilities will be promptly addressed.
+If you discover a security vulnerability, please report it in our private [Security Room](https://discord.com/channels/1352854772859932702/security) on Discord. All security vulnerabilities will be promptly addressed.
 
 ## Contributing
 
