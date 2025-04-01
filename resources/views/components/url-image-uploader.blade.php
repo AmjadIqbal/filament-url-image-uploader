@@ -13,28 +13,30 @@
             $state = $field->getState();
             $record = $field->getRecord();
             
-            // Handle different data types
-            $imageData = $record ? (
-                is_string($record->{$field->getName()}) 
-                    ? $record->{$field->getName()}
-                    : ($record->{$field->getName()} ?? null)
-            ) : null;
-            
-            // Handle both new uploads and existing images
+            // Handle different data types and sources
             $uploadedImage = null;
-            if (!empty($state)) {
+            
+            if (is_array($state) && isset($state['image']) && !empty($state['image_url']) ) {
+                // Handle new uploads
                 if (is_array($state)) {
-                    if (isset($state['image'])) {
-                        $filename = is_array($state['image']) ? ($state['image'][0] ?? '') : $state['image'];
-                    } else {
-                        $filename = is_array($state) ? ($state[0] ?? '') : $state;
-                    }
+                    $filename = is_array($state['image'] ?? null) 
+                        ? ($state['image'][0] ?? '') 
+                        : ($state['image'] ?? ($state[0] ?? ''));
                 } else {
                     $filename = $state;
                 }
                 
                 if (!empty($filename)) {
-                    $uploadedImage = Storage::disk('public')->url( $filename);
+                    $uploadedImage = Storage::disk('public')->url($filename);
+                }
+            } elseif ($record && $record->{$field->getName()}) {
+                // Handle existing database record
+                $existingImage = $record->{$field->getName()};
+             
+                if (filter_var($existingImage, FILTER_VALIDATE_URL)) {
+                    $uploadedImage = $existingImage;
+                } else {
+                    $uploadedImage = Storage::disk('public')->url($existingImage);
                 }
             }
         @endphp
