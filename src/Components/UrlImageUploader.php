@@ -57,8 +57,16 @@ class UrlImageUploader extends Field
                                         $uploadedFile = $state ?? null;
                                         if ($uploadedFile instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
                                             $filename = $uploadedFile->getClientOriginalName();
-                                            $url = Storage::disk('public')->url("{$this->directory}/{$filename}");
-                                            $set("{$fieldName}", ["{$this->directory}/{$filename}"]);
+                                            
+                                            // Save file to storage
+                                            $path = $uploadedFile->storeAs(
+                                                $this->directory,
+                                                $filename,
+                                                'public'
+                                            );
+                                            
+                                            $url = Storage::disk('public')->url($path);
+                                            $set("{$fieldName}", [$path]);
                                             $set("{$fieldName}_url", $url);
                                         }
                                     }
