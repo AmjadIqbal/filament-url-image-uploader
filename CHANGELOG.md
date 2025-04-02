@@ -2,6 +2,13 @@
 
 All notable changes to `filament-url-image-uploader` will be documented in this file.
 
+## 1.0.2 - 2024-01-19
+
+### Fixed
+- Image preview not displaying when editing existing records
+- State hydration handling for both string and array values
+- FileUpload component state format in edit mode
+
 ## 1.0.1 - 2024-01-18
 
 ### Fixed
