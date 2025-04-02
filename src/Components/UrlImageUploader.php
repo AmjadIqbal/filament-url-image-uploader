@@ -52,6 +52,17 @@ class UrlImageUploader extends Field
                                 ->preserveFilenames($this->shouldPreserveFilenames)
                                 ->directory($this->directory)
                                 ->disk('public')
+                                ->afterStateHydrated(function (Field $component, $state) {
+                                    if ($record = $component->getRecord()) {
+                                        $value = $record->{$component->getName()};
+                                        
+                                        if (is_string($value)) {
+                                            $component->state([$value]);
+                                        } elseif (is_array($value)) {
+                                            $component->state(array_filter($value));
+                                        }
+                                    }
+                                })
                                 ->afterStateUpdated(function ($state, Set $set) use ($fieldName) {
                                     if ($state) {
                                         $uploadedFile = $state ?? null;
